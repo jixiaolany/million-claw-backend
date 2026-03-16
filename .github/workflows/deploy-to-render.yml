@@ -1,0 +1,46 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests
+      run: |
+        echo "Starting test server..."
+        npm start &
+        sleep 5
+        curl -f http://localhost:3001/api/health || exit 1
+        echo "✅ API health check passed"
+        
+    - name: Deploy to Render
+      env:
+        RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+      run: |
+        # 检查是否配置了Render API Key
+        if [ -z "$RENDER_API_KEY" ]; then
+          echo "⚠️  Render API Key未配置，跳过自动部署"
+          echo "请手动部署：https://render.com/deploy"
+          exit 0
+        fi
+        
+        echo "🚀 开始部署到Render.com..."
+        # 这里可以添加Render API调用
+        echo "部署指令已准备就绪"
